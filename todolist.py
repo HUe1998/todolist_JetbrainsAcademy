@@ -35,13 +35,18 @@ def tasks_at_date(query_date):
 
 # Main Loop
 menu = {0: 'exit', 1: 'today_tasks', 2: 'week_tasks', 3: 'all_tasks',
-        4: 'add_task'}
+        4: 'missed_tasks', 5: 'add_task', 6: 'delete_task',
+        7:'delete_all_missed', 8: 'reset'}
 while True:
     print('''
 1) Today's tasks
 2) Week's tasks
 3) All tasks
-4) Add task
+4) Missed tasks
+5) Add task
+6) Delete task
+7) Delete All Missed
+8) Reset
 0) Exit''')
 
     try:
@@ -94,3 +99,49 @@ while True:
         session.add(Table(task=in_task, deadline=in_deadline))
         session.commit()
         print('The task has been added!')
+
+    elif action == 'reset':
+        x = input('''
+This action would reset all tasks!!
+Enter 'y' to confirm:
+''')
+        if x == 'y':
+            session.query(Table).delete()
+            print('All tasks deleted')
+            session.commit()
+        else:
+            print('Reset Operation Cancelled')
+            continue
+
+    # missed_tasks and delete_task uses different if else chain so missed_row
+    # is not repeated
+    missed_rows = session.query(Table).filter(
+        Table.deadline < datetime.today().date()).order_by(
+        Table.deadline).all()
+    if action == 'missed_tasks':
+        print('\nMissed tasks:')
+        if not missed_rows:
+            print('Nothing is missed!')
+        else:
+            for ind, row in enumerate(missed_rows):
+                print(
+                    f"{ind + 1}. {row.task} {row.deadline.strftime('%d %b')}")
+
+    elif action == 'delete_task':
+        if not missed_rows:
+            print('\nNothing to delete')
+        else:
+            print('\nChose the number of the task you want to delete:')
+            for ind, row in enumerate(missed_rows):
+                print(
+                    f"{ind + 1}. {row.task} {row.deadline.strftime('%d %b')}")
+            # "- 1" term because indexing starts from 1 in print output
+            in_del_num = int(input()) - 1
+            session.delete(missed_rows[in_del_num])
+            session.commit()
+
+    elif action == 'delete_all_missed':
+        for row in missed_rows:
+            session.delete(row)
+        session.commit()
+        print('\nAll missed tasks deleted!')
