@@ -12,7 +12,8 @@ class Table(Base):
     __tablename__ = 'task'
     id = Column(Integer, primary_key=True)
     task = Column(String)
-    deadline = Column(Date, default=datetime.today())
+    # Deadline contains date note datetime
+    deadline = Column(Date, default=datetime.today().date())
 
     def __repr__(self):
         return self.task
@@ -21,6 +22,15 @@ class Table(Base):
 Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
+
+
+# Return task_list from Query Date
+def tasks_at_date(query_date):
+    task_rows = session.query(Table).filter(Table.deadline == query_date).all()
+    if not task_rows:
+        return []
+    else:
+        return [f"{x.task}" for x in task_rows]
 
 
 # Main Loop
@@ -37,10 +47,10 @@ while True:
     try:
         user_input = int(input())
     except ValueError:
-        print('Invalid Input: Choose a Number')
+        print('\nInvalid Input: Choose a Number')
         continue
     if user_input not in menu:
-        print('Invalid Input: Choose valid numbers from menu')
+        print('\nInvalid Input: Choose valid numbers from menu')
         continue
     action = menu[user_input]
     today = datetime.today()
@@ -48,17 +58,39 @@ while True:
     if action == 'exit':
         print('\nBye!')
         sys.exit()
+
     elif action == 'today_tasks':
-        rows = session.query(Table).all()
-        if not rows:
-            print(f"\nToday {today.day} {today.strftime('%b')}:")
+        task_list = tasks_at_date(today.date())
+        if not task_list:
+            print(f"\nToday {today.strftime('%d %b')}:")
             print('Nothing to do!')
         else:
-            for row in rows:
-                print(str(row.id) + '.', row.task) #TODO: replace with fstring
+            print(f"\nToday {today.strftime('%d %b')}:")
+            for index, task in enumerate(task_list):
+                print(f"{index + 1}. {task}")
+
+    elif action == 'week_tasks':
+        for i in range(7):
+            query_date = (today + timedelta(days=i)).date()
+            task_list = tasks_at_date(query_date)
+            if not task_list:
+                print(f'\n{query_date.strftime("%A %d %b")}:')
+                print('Nothing to do!')
+            else:
+                print(f'\n{query_date.strftime("%A %d %b")}:')
+                for index, task in enumerate(task_list):
+                    print(f"{index + 1}. {task}")
+
+    elif action == 'all_tasks':
+        all_rows = session.query(Table).all()
+        print("\nAll tasks:")
+        for row in all_rows:
+            print(f"{row.id}. {row.task}. {row.deadline.strftime('%d %b')}")
+
     elif action == 'add_task':
-        #TODO: Bookmark
-        input_task = input('\nEnter task\n')
-        session.add(Table(task=input_task))
+        in_task = input('\nEnter task\n')
+        in_deadline = datetime.strptime(input('Enter deadline\n'),
+                                        '%Y-%m-%d').date()
+        session.add(Table(task=in_task, deadline=in_deadline))
         session.commit()
         print('The task has been added!')
