@@ -1,5 +1,5 @@
 # To-Do-List
-This is a todolist project from Jetbrains Academy.
+This is a todolist project
 ## Features
 This program runs in Terminal. It uses sqlalchemy to create sqlite database to store tasks and deadlines. 
 Following features are implemented:
