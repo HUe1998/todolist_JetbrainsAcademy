@@ -13,3 +13,9 @@ Following features are implemented:
 ---
 Further improvements that could be made:
 * Implement Time for deadlines (Current program only supports date)
+
+## App Preview
+
+
+https://user-images.githubusercontent.com/61866120/119641099-ed14b200-be36-11eb-9064-78c7a3cb75bd.mp4
+
